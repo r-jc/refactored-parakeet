@@ -1,0 +1,263 @@
+<html>
+  <head>
+    <title></title>
+    <meta content="">
+    <script>
+      var drops = [];
+      var drop_count = 12
+      var drop_timeout = 2000;
+      var drop_gauss = -10000000*0.2;
+      var drops_volume = 0.66;
+      
+      var presences = [];
+      var presence_count = 12
+      var presence_timeout = 4000;
+      var presence_gauss = -10000000*0.2;
+      var presences_volume = 0.5;
+      
+      var bg;
+      var bg_len = 600000;
+      var bg_volume = 1;
+      
+      var global_volume = 1;
+      
+//       var rever_count = 4
+      
+      const TAU = 2.0 * Math.PI;
+      var GLOBALVOLINPUT;
+      var GLOBALVOLDISPLAY;
+      var DROPFREQINPUT;
+      var DROPFREQDISPLAY;
+      var DROPVOLINPUT;
+      var DROPVOLDISPLAY;
+      
+      function loaded() {
+        GLOBALVOLINPUT = document.getElementById('volume-input')
+        GLOBALVOLDISPLAY = document.getElementById('volume-display')
+        
+        BGVOLINPUT = document.getElementById('bg-vol-input')
+        BGVOLDISPLAY = document.getElementById('bg-vol-display')
+        
+        DROPFREQINPUT = document.getElementById('drop-freq-input')
+        DROPFREQDISPLAY = document.getElementById('drop-freq-display')
+        DROPVOLINPUT = document.getElementById('drop-vol-input')
+        DROPVOLDISPLAY = document.getElementById('drop-vol-display')
+        
+        
+        PRESENCEFREQINPUT = document.getElementById('presence-freq-input')
+        PRESENCEFREQDISPLAY = document.getElementById('presence-freq-display')
+        PRESENCEVOLINPUT = document.getElementById('presence-vol-input')
+        PRESENCEVOLDISPLAY = document.getElementById('presence-vol-display')
+        
+        bg = new Audio("snd/bg.mp3");
+        bg.loop = true;
+        
+        for ( var i = 0; i < drop_count; i++ ){
+          var snd  = new Audio("snd/drops/" + pad(i) + ".ogg");
+          snd.volume = presences_volume * global_volume;
+          drops.push(snd)
+        }
+        
+        for ( var i = 0; i < presence_count; i++ ){
+          var snd  = new Audio("snd/presences/" + pad(i) + ".ogg");
+          snd.volume = drops_volume * global_volume;
+          presences.push(snd)
+        }
+      }
+      
+      function start(){
+        setTimeout(drop_loop,2000)
+        setTimeout(presence_loop,2000)
+        setTimeout(bg_loop,0)
+        console.log('continue')
+      }
+      
+      function pad(num) {
+        var s = "0" + num;
+        return s.substr(s.length-2);
+      }
+
+      
+      function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+      }
+      
+      function getRandomInt(max) {
+        return Math.floor(Math.random() * Math.floor(max));
+      }
+      
+      async function drop_loop() {
+        while (true) {
+          let u = 0, v = 0;
+          while(u === 0) u = Math.random();
+          while(v === 0) v = Math.random();
+          wait = Math.abs( drop_timeout + Math.sqrt( drop_gauss * Math.log( u ) ) * Math.cos( TAU * v ));
+          console.log(wait)
+          await sleep(wait);
+//           choosen_drop = getRandomInt(drop_count);
+          drop()
+        }
+      }
+      
+      async function presence_loop() {
+        while (true) {
+          let u = 0, v = 0;
+          while(u === 0) u = Math.random();
+          while(v === 0) v = Math.random();
+          wait = Math.abs( presence_timeout + Math.sqrt( presence_gauss * Math.log( u ) ) * Math.cos( TAU * v ));
+          console.log(wait)
+          await sleep(wait);
+//           choosen_presence = getRandomInt(presence_count);
+          presence()
+        }
+      }
+      
+      async function bg_loop() {
+        bg.play();
+      }
+    
+      function drop() {
+        choosen_drop= getRandomInt(drop_count)
+//         drops[choosen_drop].volume = drops_volume * global_volume;
+        drops[choosen_drop].play();
+      }
+      
+      function presence() {
+        choosen_presence= getRandomInt(presence_count)
+//         presences[choosen_presence].volume = presences_volume * global_volume;
+        presences[choosen_presence].play();
+      }
+      
+      
+      
+      function bgVolChanged(){
+        bg_volume = BGVOLINPUT.value/100;
+        
+        bg.volume = bg_volume * global_volume
+        
+        BGVOLDISPLAY.innerHTML = BGVOLINPUT.value + '%';
+      }
+      
+      function dropFreqChanged(){
+        drop_timeout = 275+(((DROPFREQINPUT.value/100)**2)*(60000-275));
+        DROPFREQDISPLAY.innerHTML = Math.floor(drop_timeout/10)/100 + 's';
+      }
+      
+      
+      
+      function dropVolChanged(){
+        drops_volume = DROPVOLINPUT.value/100;
+        
+        for ( var i = 0; i < drop_count; i++ ){
+          drops[i].volume = drops_volume * global_volume;
+        }
+        
+        DROPVOLDISPLAY.innerHTML = DROPVOLINPUT.value + '%';
+      }
+      
+      
+      
+      function presenceFreqChanged(){
+        presence_timeout = 275+(((PRESENCEFREQINPUT.value/100)**2)*(60000-275));
+        PRESENCEFREQDISPLAY.innerHTML = Math.floor(presence_timeout/10)/100 + 's';
+      }
+      
+      
+      
+      function presenceVolChanged(){
+        presences_volume = PRESENCEVOLINPUT.value/100;
+        
+        for ( var i = 0; i < presence_count; i++ ){
+          presences[i].volume = presences_volume * global_volume;
+        }
+        
+        PRESENCEVOLDISPLAY.innerHTML = PRESENCEVOLINPUT.value + '%';
+      }
+      
+      function volumeChanged(){
+        global_volume = GLOBALVOLINPUT.value/100;
+        
+        for ( var i = 0; i < drop_count; i++ ){
+          drops[i].volume = drops_volume * global_volume;
+        }
+        for ( var i = 0; i < presence_count; i++ ){
+          presences[i].volume = presences_volume * global_volume;
+        }
+        bg.volume = bg_volume * global_volume
+        
+        GLOBALVOLDISPLAY.innerHTML = GLOBALVOLINPUT.value + '%';
+      }
+    </script>
+    <style>
+    label,
+    input,
+    span{
+      display: block;
+      float:left;
+      margin:0;
+      height:4em;
+    
+    }
+    label{
+      width: 20%;
+    }
+    input{
+      width: 75%;
+    }
+    span{
+      width: 5%;
+    }
+    
+    button{width:100%}
+    .range-control{height:4em}
+    </style>
+  </head>
+  <body onload="loaded()">
+    <!--<audio id="drop-00" src="snd/drops/00.ogg" preload="auto"></audio>
+    <audio id="drop-01" src="snd/drops/01.ogg" preload="auto"></audio>
+    <audio id="drop-02" src="snd/drops/02.ogg" preload="auto"></audio>
+    <audio id="drop-03" src="snd/drops/03.ogg" preload="auto"></audio>
+    <audio id="drop-04" src="snd/drops/04.ogg" preload="auto"></audio>
+    <audio id="drop-05" src="snd/drops/05.ogg" preload="auto"></audio>
+    <audio id="drop-06" src="snd/drops/06.ogg" preload="auto"></audio>
+    <audio id="drop-07" src="snd/drops/07.ogg" preload="auto"></audio>
+    <audio id="drop-08" src="snd/drops/08.ogg" preload="auto"></audio>
+    <audio id="drop-09" src="snd/drops/09.ogg" preload="auto"></audio>
+    <audio id="drop-10" src="snd/drops/10.ogg" preload="auto"></audio>
+    <audio id="drop-11" src="snd/drops/11.ogg" preload="auto"></audio>-->
+    <button onclick="start()">Escuchar la osocueva</button>
+    <div class="range-control">
+      <label>Volumen Global</label>
+      <input id="volume-input" type="range" min="0" max="100" value="100" onchange="volumeChanged();" oninput="volumeChanged();"/>
+      <span id="volume-display">100%<span>
+    </div>
+    <hr />
+    <div class="range-control">
+      <label>Volumen fondo</label>
+      <input id="bg-vol-input" type="range" min="0" max="100" value="100" onchange="bgVolChanged();" oninput="bgVolChanged();"/>
+      <span id="bg-vol-display">100%<span>
+    </div>
+    <hr />
+    <div class="range-control">
+      <label>Tiempo medio de las «gotas»</label>
+      <input id="drop-freq-input" type="range" min="0" max="100" value="17" onchange="dropFreqChanged();" oninput="dropFreqChanged();"/>
+      <span id="drop-freq-display">2s<span>
+    </div>
+    <div class="range-control">
+      <label>Volumen de las «gotas»</label>
+      <input id="drop-vol-input" type="range" min="0" max="100" value="66" onchange="dropVolChanged();" oninput="dropVolChanged();"/>
+      <span id="drop-vol-display">66%<span>
+    </div>
+    <hr />
+    <div class="range-control">
+      <label>Tiempo medio de las oso-presencias</label>
+      <input id="presence-freq-input" type="range" min="0" max="100" value="25" onchange="presenceFreqChanged();" oninput="presenceFreqChanged();"/>
+      <span id="presence-freq-display">4s<span>
+    </div>
+    <div class="range-control">
+      <label>Volumen de las oso-presencias</label>
+      <input id="presence-vol-input" type="range" min="0" max="100" value="50" onchange="presenceVolChanged();" oninput="presenceVolChanged();"/>
+      <span id="presence-vol-display">50%<span>
+    </div>
+  </body>
+</html>
